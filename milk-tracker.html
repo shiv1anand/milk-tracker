@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>🥛 Milk Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: #F0F4FF;
+    color: #1a1a2e;
+    max-width: 430px;
+    margin: 0 auto;
+    padding-bottom: 80px;
+    min-height: 100vh;
+  }
+
+  .header {
+    background: #2C6BED;
+    padding: 24px 18px 20px;
+    color: white;
+  }
+  .header h1 { font-size: 22px; font-weight: 900; }
+  .header .date { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+  .month-total {
+    background: #27AE60;
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 16px rgba(39,174,96,0.4);
+  }
+  .month-total .label { font-size: 12px; opacity: 0.9; font-weight: 800; letter-spacing: 0.5px; }
+  .month-total .amount { font-size: 32px; font-weight: 900; }
+  .month-total .sub { font-size: 12px; opacity: 0.85; margin-top: 3px; }
+
+  .tabs {
+    display: flex;
+    background: white;
+    padding: 10px;
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .tab {
+    flex: 1;
+    padding: 10px 6px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    background: #F0F4FF;
+    color: #666;
+    transition: all 0.2s;
+  }
+  .tab.active { background: #2C6BED; color: white; }
+
+  .page { display: none; padding: 14px; }
+  .page.active { display: block; }
+
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  }
+  .card-title {
+    font-size: 12px;
+    font-weight: 800;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 12px;
+  }
+
+  /* Product select */
+  .prod-btn {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #E8E8E8;
+    border-radius: 14px;
+    background: white;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.15s;
+    text-align: left;
+  }
+  .prod-btn.selected { border-color: #2C6BED; background: #EEF3FF; }
+  .prod-btn .prod-left { display: flex; align-items: center; gap: 10px; }
+  .prod-btn .prod-price { font-size: 12px; color: #999; font-weight: 700; margin-top: 2px; }
+
+  /* Qty */
+  .qty-big {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0 16px;
+  }
+  .qty-controls {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 20px;
+  }
+  .qty-btn {
+    width: 56px; height: 56px;
+    border: none; border-radius: 16px;
+    font-size: 28px; font-weight: 900;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    transition: transform 0.1s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .qty-btn:active { transform: scale(0.88); }
+  .minus { background: #FFE8E8; color: #E74C3C; }
+  .plus  { background: #E8F8EE; color: #27AE60; }
+  .qty-display {
+    font-size: 48px;
+    font-weight: 900;
+    color: #2C6BED;
+    min-width: 100px;
+    text-align: center;
+    line-height: 1;
+  }
+  .qty-display span { font-size: 20px; color: #999; font-weight: 700; }
+
+  .total-preview {
+    background: #E8F8EE;
+    border-radius: 14px;
+    padding: 14px 20px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .total-preview .tl { font-size: 14px; font-weight: 800; color: #27AE60; }
+  .total-preview .ta { font-size: 26px; font-weight: 900; color: #27AE60; }
+
+  .btn-save {
+    width: 100%;
+    padding: 16px;
+    background: #2C6BED;
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 16px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-save:active { opacity: 0.85; }
+
+  /* Entries */
+  .entry-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #F0F0F0;
+  }
+  .entry-item:last-child { border-bottom: none; }
+  .entry-left { display: flex; align-items: center; gap: 10px; }
+  .entry-emoji { font-size: 24px; }
+  .entry-name  { font-size: 14px; font-weight: 800; }
+  .entry-detail { font-size: 12px; color: #999; margin-top: 2px; }
+  .entry-del { background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px; }
+
+  .today-total {
+    background: #EEF3FF;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .today-total .tl { font-size: 13px; font-weight: 800; color: #2C6BED; }
+  .today-total .ta { font-size: 20px; font-weight: 900; color: #2C6BED; }
+
+  /* History month cards */
+  .month-card {
+    background: white;
+    border-radius: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    overflow: hidden;
+  }
+  .month-header {
+    background: #2C6BED;
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+  }
+  .month-header .mname  { font-size: 16px; font-weight: 900; color: white; }
+  .month-header .mstats { font-size: 12px; color: rgba(255,255,255,0.8); margin-top: 2px; }
+  .month-header .mtotal { font-size: 22px; font-weight: 900; color: white; }
+  .month-header .arrow  { color: white; font-size: 14px; transition: transform 0.2s; }
+  .month-header.open .arrow { transform: rotate(180deg); }
+
+  .month-entries { display: none; padding: 12px 16px; }
+  .month-entries.open { display: block; }
+
+  .day-group { margin-bottom: 12px; }
+  .day-label {
+    font-size: 11px; font-weight: 800; color: #999;
+    text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;
+  }
+
+  /* Products */
+  .prod-setting-item {
+    padding: 14px 0;
+    border-bottom: 1px solid #F0F0F0;
+  }
+  .prod-setting-item:last-child { border-bottom: none; }
+  .prod-setting-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .prod-setting-name { font-size: 15px; font-weight: 800; }
+  .prod-actions { display: flex; gap: 6px; }
+  .ic-btn {
+    width: 32px; height: 32px;
+    border: none; border-radius: 8px;
+    font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ic-edit { background: #EEF3FF; color: #2C6BED; }
+  .ic-del  { background: #FFE8E8; color: #E74C3C; }
+
+  .price-inputs { display: flex; gap: 8px; }
+  .price-input-box { flex: 1; }
+  .price-input-box label { font-size: 11px; font-weight: 800; color: #999; display: block; margin-bottom: 4px; }
+  .price-input-box input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #E8E8E8;
+    border-radius: 10px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px; font-weight: 700;
+    outline: none; background: #FAFAFA;
+  }
+  .price-input-box input:focus { border-color: #2C6BED; }
+
+  .form-group { margin-bottom: 12px; }
+  .form-group label { font-size: 12px; font-weight: 800; color: #999; display: block; margin-bottom: 6px; text-transform: uppercase; }
+  .form-group input {
+    width: 100%;
+    padding: 13px 14px;
+    border: 2px solid #E8E8E8;
+    border-radius: 12px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px; font-weight: 700;
+    outline: none; background: #FAFAFA;
+  }
+  .form-group input:focus { border-color: #2C6BED; }
+
+  .emoji-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .em-btn {
+    padding: 8px 10px;
+    border: 2px solid #E8E8E8;
+    border-radius: 10px;
+    font-size: 20px; cursor: pointer;
+    background: white; transition: all 0.15s;
+  }
+  .em-btn.selected { border-color: #2C6BED; background: #EEF3FF; }
+
+  .info-box {
+    background: #FFF8F0;
+    border: 2px solid #FFD4A8;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 12px; color: #E67E22; font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .empty { text-align: center; padding: 30px 16px; color: #bbb; font-size: 14px; font-weight: 700; }
+  .empty span { font-size: 40px; display: block; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <h1>🥛 Milk Tracker</h1>
+  <div class="date" id="todayDate"></div>
+  <div class="month-total">
+    <div>
+      <div class="label">IS MAHINE KA TOTAL</div>
+      <div class="amount">₹<span id="monthAmt">0</span></div>
+      <div class="sub"><span id="monthL">0</span>L purchased</div>
+    </div>
+    <div style="font-size:36px;">💰</div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="goTo('add')">➕ Add</button>
+  <button class="tab" onclick="goTo('history')">📋 History</button>
+  <button class="tab" onclick="goTo('products')">⚙️ Products</button>
+</div>
+
+<!-- ADD PAGE -->
+<div id="page-add" class="page active">
+
+  <!-- Product select -->
+  <div class="card">
+    <div class="card-title">Milk Select Karo</div>
+    <div id="prodSelectList"></div>
+  </div>
+
+  <!-- Qty section - shown after product selected -->
+  <div id="qtySection" style="display:none;">
+    <div class="card">
+      <div class="card-title" id="qtyTitle">Kitna Liya?</div>
+      <div class="qty-big">
+        <div class="qty-controls">
+          <button class="qty-btn minus" onclick="changeQty(-0.5)">−</button>
+          <div class="qty-display" id="qtyDisplay">1<span>L</span></div>
+          <button class="qty-btn plus" onclick="changeQty(0.5)">+</button>
+        </div>
+        <div class="total-preview">
+          <div class="tl">Total Cost</div>
+          <div class="ta" id="totalPreview">₹0</div>
+        </div>
+        <button class="btn-save" onclick="saveEntry()">✅ Save Karo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Today entries ALWAYS visible at bottom -->
+  <div class="card">
+    <div class="card-title">Aaj Ki Entries</div>
+    <div id="todayList"></div>
+  </div>
+
+  <div id="noProds" style="display:none;">
+    <div class="card">
+      <div class="empty"><span>⚙️</span>Pehle Products tab mein milk add karo!</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- HISTORY PAGE -->
+<div id="page-history" class="page">
+  <div id="historyList"></div>
+</div>
+
+<!-- PRODUCTS PAGE -->
+<div id="page-products" class="page">
+  <div class="card">
+    <div class="card-title">Aapke Products</div>
+    <div id="prodList"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" id="formTitle">Naya Product Add Karo</div>
+
+    <div class="form-group">
+      <label>Product Ka Naam</label>
+      <input type="text" id="fName" placeholder="e.g. Amul Full Cream">
+    </div>
+
+    <div class="form-group">
+      <label>Emoji Chuno</label>
+      <div class="emoji-grid">
+        <button class="em-btn selected" onclick="pickEmoji(this,'🥛')">🥛</button>
+        <button class="em-btn" onclick="pickEmoji(this,'🧴')">🧴</button>
+        <button class="em-btn" onclick="pickEmoji(this,'🐄')">🐄</button>
+        <button class="em-btn" onclick="pickEmoji(this,'🌿')">🌿</button>
+        <button class="em-btn" onclick="pickEmoji(this,'⭐')">⭐</button>
+        <button class="em-btn" onclick="pickEmoji(this,'🐐')">🐐</button>
+        <button class="em-btn" onclick="pickEmoji(this,'💧')">💧</button>
+        <button class="em-btn" onclick="pickEmoji(this,'🌾')">🌾</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Price Set Karo</label>
+      <div class="info-box">
+        ⚠️ Half litre alag price hai toh dono bharo!<br>
+        <span style="color:#999;font-weight:600;">Khali chhoda toh auto (1L ÷ 2) hoga</span>
+      </div>
+      <div class="price-inputs">
+        <div class="price-input-box">
+          <label>1 LITRE (₹)</label>
+          <input type="number" id="fPrice1" placeholder="e.g. 68" oninput="autoHalf()">
+        </div>
+        <div class="price-input-box">
+          <label>0.5 LITRE (₹)</label>
+          <input type="number" id="fPriceHalf" placeholder="e.g. 35">
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-save" onclick="saveProduct()">💾 Save Karo</button>
+  </div>
+</div>
+
+<script>
+let products = JSON.parse(localStorage.getItem('mlkProds2')    || '[]');
+let entries  = JSON.parse(localStorage.getItem('mlkEntries2')  || '[]');
+let selProdId = null;
+let curQty    = 1;
+let curEmoji  = '🥛';
+let editId    = null;
+
+if (products.length === 0) {
+  products = [
+    { id: 1, name: 'Amul Full Cream', emoji: '🥛', price1: 68, priceHalf: 35 },
+    { id: 2, name: 'Amul Toned',      emoji: '🧴', price1: 54, priceHalf: 28 },
+  ];
+  save();
+}
+
+function save() {
+  localStorage.setItem('mlkProds2',   JSON.stringify(products));
+  localStorage.setItem('mlkEntries2', JSON.stringify(entries));
+}
+
+function calcPrice(prod, qty) {
+  const full = Math.floor(qty);
+  const half = (qty % 1) !== 0;
+  const hp   = prod.priceHalf || Math.ceil(prod.price1 / 2);
+  return full * prod.price1 + (half ? hp : 0);
+}
+
+function breakdownFromEntry(e) {
+  const full = Math.floor(e.qty);
+  const half = (e.qty % 1) !== 0;
+  let p = [];
+  if (full > 0) p.push(`${full}L×₹${e.price1}`);
+  if (half)     p.push(`0.5L×₹${e.priceHalf}`);
+  return p.join(' + ');
+}
+
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function pad(n) { return String(n).padStart(2,'0'); }
+function monthKey(ds) { return ds.slice(0,7); }
+
+const MONTHS       = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAYS         = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+function monthLabel(mk) {
+  const [y,m] = mk.split('-').map(Number);
+  return `${MONTHS[m-1]} ${y}`;
+}
+function dayLabel(ds) {
+  const [y,m,d] = ds.split('-').map(Number);
+  const dt    = new Date(y, m-1, d);
+  const today = todayKey();
+  const ye    = new Date(); ye.setDate(ye.getDate()-1);
+  const yk    = `${ye.getFullYear()}-${pad(ye.getMonth()+1)}-${pad(ye.getDate())}`;
+  if (ds === today) return `📅 Aaj, ${d} ${MONTHS_SHORT[m-1]}`;
+  if (ds === yk)    return `⬅️ Kal, ${d} ${MONTHS_SHORT[m-1]}`;
+  return `${DAYS[dt.getDay()]}, ${d} ${MONTHS_SHORT[m-1]} ${y}`;
+}
+
+// Header date
+const nd = new Date();
+document.getElementById('todayDate').textContent =
+  `${DAYS[nd.getDay()]}, ${nd.getDate()} ${MONTHS_SHORT[nd.getMonth()]} ${nd.getFullYear()}`;
+
+function updateHeader() {
+  const cur = monthKey(todayKey());
+  const tm  = entries.filter(e => monthKey(e.date) === cur);
+  document.getElementById('monthAmt').textContent = tm.reduce((s,e)=>s+e.total,0);
+  document.getElementById('monthL').textContent   = tm.reduce((s,e)=>s+e.qty,0).toFixed(1);
+}
+
+function goTo(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t  => t.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.tab')[['add','history','products'].indexOf(page)].classList.add('active');
+  if (page==='add')      renderAdd();
+  if (page==='history')  renderHistory();
+  if (page==='products') renderProds();
+  updateHeader();
+}
+
+/* ===== ADD PAGE ===== */
+function renderAdd() {
+  renderToday();   // always render today entries first
+
+  const list = document.getElementById('prodSelectList');
+  if (products.length === 0) {
+    document.getElementById('noProds').style.display = 'block';
+    list.innerHTML = '';
+    document.getElementById('qtySection').style.display = 'none';
+    return;
+  }
+  document.getElementById('noProds').style.display = 'none';
+
+  list.innerHTML = products.map(p => `
+    <button class="prod-btn ${selProdId===p.id?'selected':''}" onclick="selectProd(${p.id})">
+      <div class="prod-left">
+        <span style="font-size:26px;">${p.emoji}</span>
+        <div>
+          <div>${p.name}</div>
+          <div class="prod-price">1L=₹${p.price1} · 0.5L=₹${p.priceHalf||Math.ceil(p.price1/2)}</div>
+        </div>
+      </div>
+      ${selProdId===p.id ? '✅' : ''}
+    </button>
+  `).join('');
+}
+
+function selectProd(id) {
+  selProdId = id;
+  curQty    = 1;
+  const p   = products.find(x=>x.id===id);
+  document.getElementById('qtyTitle').textContent = `Kitna Liya? (${p.emoji} ${p.name})`;
+  document.getElementById('qtySection').style.display = 'block';
+  renderAdd();
+  updateQtyUI();
+  document.getElementById('qtySection').scrollIntoView({behavior:'smooth'});
+}
+
+function changeQty(d) {
+  curQty = Math.max(0.5, Math.round((curQty+d)*10)/10);
+  updateQtyUI();
+}
+
+function updateQtyUI() {
+  document.getElementById('qtyDisplay').innerHTML = `${curQty}<span>L</span>`;
+  const p = products.find(x=>x.id===selProdId);
+  if (p) document.getElementById('totalPreview').textContent = `₹${calcPrice(p, curQty)}`;
+}
+
+function saveEntry() {
+  const p = products.find(x=>x.id===selProdId);
+  if (!p) { alert('Milk select karo!'); return; }
+  entries.push({
+    id:        Date.now(),
+    date:      todayKey(),
+    prodId:    p.id,
+    prodName:  p.name,
+    prodEmoji: p.emoji,
+    qty:       curQty,
+    price1:    p.price1,
+    priceHalf: p.priceHalf || Math.ceil(p.price1/2),
+    total:     calcPrice(p, curQty)
+  });
+  save();
+  updateHeader();
+  selProdId = null;
+  document.getElementById('qtySection').style.display = 'none';
+  renderAdd();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function renderToday() {
+  const items = entries.filter(e => e.date === todayKey());
+  const el    = document.getElementById('todayList');
+  if (items.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:20px 0;"><div style="font-size:52px;margin-bottom:8px;">🌅</div><div style="font-size:14px;font-weight:700;color:#bbb;">Aaj koi entry nahi</div></div>';
+    return;
+  }
+  const tot = items.reduce((s,e)=>s+e.total, 0);
+  const ltr = items.reduce((s,e)=>s+e.qty,   0);
+  el.innerHTML = `
+    <div class="today-total">
+      <div class="tl">Aaj Ka Total · ${ltr}L</div>
+      <div class="ta">₹${tot}</div>
+    </div>
+    ${items.map(e=>`
+      <div class="entry-item">
+        <div class="entry-left">
+          <span class="entry-emoji">${e.prodEmoji}</span>
+          <div>
+            <div class="entry-name">${e.prodName}</div>
+            <div class="entry-detail">${breakdownFromEntry(e)} = ₹${e.total}</div>
+          </div>
+        </div>
+        <button class="entry-del" onclick="delEntry(${e.id})">🗑️</button>
+      </div>
+    `).join('')}
+  `;
+}
+
+function delEntry(id) {
+  if (!confirm('Delete?')) return;
+  entries = entries.filter(e=>e.id!==id);
+  save(); updateHeader(); renderToday(); renderHistory();
+}
+
+/* ===== HISTORY PAGE ===== */
+function renderHistory() {
+  const el = document.getElementById('historyList');
+  if (entries.length === 0) {
+    el.innerHTML = '<div class="card"><div class="empty"><span>📭</span>Koi history nahi</div></div>';
+    return;
+  }
+
+  const byMonth = {};
+  entries.forEach(e => {
+    const mk = monthKey(e.date);
+    if (!byMonth[mk]) byMonth[mk] = {};
+    if (!byMonth[mk][e.date]) byMonth[mk][e.date] = [];
+    byMonth[mk][e.date].push(e);
+  });
+
+  const sortedMonths = Object.keys(byMonth).sort().reverse();
+
+  el.innerHTML = sortedMonths.map((mk, idx) => {
+    const allE   = Object.values(byMonth[mk]).flat();
+    const mTotal  = allE.reduce((s,e)=>s+e.total, 0);
+    const mLitres = allE.reduce((s,e)=>s+e.qty,   0).toFixed(1);
+    const mDays   = Object.keys(byMonth[mk]).length;
+    const isOpen  = idx === 0;
+
+    const daysHTML = Object.keys(byMonth[mk]).sort().reverse().map(date => {
+      const di   = byMonth[mk][date];
+      const dTot = di.reduce((s,e)=>s+e.total, 0);
+      const dLtr = di.reduce((s,e)=>s+e.qty,   0);
+      return `
+        <div class="day-group">
+          <div class="day-label">${dayLabel(date)} · ${dLtr}L · ₹${dTot}</div>
+          ${di.map(e=>`
+            <div class="entry-item">
+              <div class="entry-left">
+                <span class="entry-emoji">${e.prodEmoji}</span>
+                <div>
+                  <div class="entry-name">${e.prodName}</div>
+                  <div class="entry-detail">${breakdownFromEntry(e)} = ₹${e.total}</div>
+                </div>
+              </div>
+              <button class="entry-del" onclick="delEntry(${e.id})">🗑️</button>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="month-card">
+        <div class="month-header ${isOpen?'open':''}" onclick="toggleMonth(this)">
+          <div>
+            <div class="mname">${monthLabel(mk)}</div>
+            <div class="mstats">${mLitres}L · ${mDays} din</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="mtotal">₹${mTotal}</div>
+            <div class="arrow">▼</div>
+          </div>
+        </div>
+        <div class="month-entries ${isOpen?'open':''}">
+          ${daysHTML}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleMonth(header) {
+  header.classList.toggle('open');
+  header.nextElementSibling.classList.toggle('open');
+}
+
+/* ===== PRODUCTS PAGE ===== */
+function renderProds() {
+  const el = document.getElementById('prodList');
+  if (products.length === 0) {
+    el.innerHTML = '<div class="empty"><span>🛒</span>Koi product nahi</div>';
+    return;
+  }
+  el.innerHTML = products.map(p=>`
+    <div class="prod-setting-item">
+      <div class="prod-setting-top">
+        <div class="prod-setting-name">${p.emoji} ${p.name}</div>
+        <div class="prod-actions">
+          <button class="ic-btn ic-edit" onclick="editProd(${p.id})">✏️</button>
+          <button class="ic-btn ic-del"  onclick="deleteProd(${p.id})">🗑️</button>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#999;font-weight:700;">
+        1L = ₹${p.price1} &nbsp;|&nbsp; 0.5L = ₹${p.priceHalf||Math.ceil(p.price1/2)}
+      </div>
+    </div>
+  `).join('');
+}
+
+function autoHalf() {
+  const p1 = parseFloat(document.getElementById('fPrice1').value);
+  const el = document.getElementById('fPriceHalf');
+  if (p1 && !el.value) el.placeholder = `auto: ₹${Math.ceil(p1/2)}`;
+}
+
+function pickEmoji(btn, em) {
+  document.querySelectorAll('.em-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  curEmoji = em;
+}
+
+function saveProduct() {
+  const name      = document.getElementById('fName').value.trim();
+  const price1    = parseFloat(document.getElementById('fPrice1').value);
+  const ph        = document.getElementById('fPriceHalf').value;
+  const priceHalf = ph ? parseFloat(ph) : Math.ceil(price1/2);
+  if (!name||!price1) { alert('Naam aur 1L price bharo!'); return; }
+
+  if (editId) {
+    const p = products.find(x=>x.id===editId);
+    if (p) { p.name=name; p.emoji=curEmoji; p.price1=price1; p.priceHalf=priceHalf; }
+    editId = null;
+    document.getElementById('formTitle').textContent = 'Naya Product Add Karo';
+  } else {
+    products.push({id:Date.now(), name, emoji:curEmoji, price1, priceHalf});
+  }
+  save();
+  document.getElementById('fName').value      = '';
+  document.getElementById('fPrice1').value    = '';
+  document.getElementById('fPriceHalf').value = '';
+  renderProds(); updateHeader();
+}
+
+function deleteProd(id) {
+  if (!confirm('Delete?')) return;
+  products = products.filter(p=>p.id!==id);
+  save(); renderProds();
+}
+
+function editProd(id) {
+  const p = products.find(x=>x.id===id);
+  if (!p) return;
+  editId = id;
+  document.getElementById('fName').value      = p.name;
+  document.getElementById('fPrice1').value    = p.price1;
+  document.getElementById('fPriceHalf').value = p.priceHalf||'';
+  curEmoji = p.emoji;
+  document.querySelectorAll('.em-btn').forEach(b=>b.classList.toggle('selected', b.textContent===p.emoji));
+  document.getElementById('formTitle').textContent = '✏️ Edit Product';
+  document.querySelector('#page-products .card:last-child').scrollIntoView({behavior:'smooth'});
+}
+
+/* ===== INIT ===== */
+updateHeader();
+renderAdd();
+</script>
+</body>
+</html>
